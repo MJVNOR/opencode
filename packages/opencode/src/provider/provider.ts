@@ -691,7 +691,16 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
               expires: refreshed.result.expiresAt,
             }
 
-            yield* dep.setAuth(input.id, auth)
+            try {
+              yield* dep.setAuth(input.id, auth)
+            } catch (error) {
+              yield* Effect.logWarning(
+                "GitLab OAuth token refreshed but could not be persisted; disabling GitLab provider for this session",
+                { error },
+              )
+
+              auth = undefined
+            }
           } else {
             yield* Effect.logWarning(
               "GitLab OAuth refresh failed; disabling GitLab provider for this session",
